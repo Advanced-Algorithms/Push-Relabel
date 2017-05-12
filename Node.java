@@ -1,7 +1,9 @@
 import java.util.*;
 
 public class Node{
+	//Array of edges coming in
 	private ArrayList<Edge> inArray;
+	//Array of edges going out
 	private ArrayList<Edge> outArray;
 	private int preflow;
 	private int outflow;

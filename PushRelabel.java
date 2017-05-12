@@ -5,12 +5,14 @@ import java.util.*;
 
 public class PushRelabel{
 
+	//The original graph
 	private ArrayList<Edge> edges;
+	private ArrayList<Node> verts;
+	//The residual graph.  All the operations work on the residual graph.
 	private ArrayList<Edge> residualEdges;
 	private ArrayList<Edge> backEdges;
-	private ArrayList<Node> verts;
 	private ArrayList<Node> resVerts;
-	private Stack<Node> stack = new Stack<>();
+
 	/*
 		Assuming input is formatted as follwos:
 		# of Vertices
@@ -28,43 +30,56 @@ public class PushRelabel{
 		Scanner sc= new Scanner(System.in);
 		int numVs = sc.nextInt();
 		for (int i = 0; i < numVs; i++){
+			//Have copies of all vertices in both graphs
 			verts.add(new Node());
 			resVerts.add(new Node());
 		}
 		int numEs = sc.nextInt();
 		for (int j = 0; j < numEs; j++){
+			//From
 			int v1 = sc.nextInt();
+			//To
 			int v2 = sc.nextInt();
+			//Capacity
 			int cap = sc.nextInt();
 			Edge e = new Edge(verts.get(v1), verts.get(v2), cap);
 			edges.add(e);
 			verts.get(v1).addOutEdge(e);
 			verts.get(v2).addInEdge(e);
+			//Edge in residual graph
 			Edge resE = new Edge(verts.get(v1), verts.get(v2), cap);
 			residualEdges.add(resE);
 			resVerts.get(v1).addOutEdge(resE);
 			resVerts.get(v2).addInEdge(resE);
+			//The reverse edge
 			Edge be = new Edge(verts.get(v2), verts.get(v1), 0);
 			backEdges.add(be);
 			resVerts.get(v2).addOutEdge(be);
 			resVerts.get(v1).addInEdge(be);
+			//For later might not be needed
 			be.setIsReverse(true);
 			resE.setReverse(be);
 		}
+		//Set source height
 		Node source = verts.get(0);
 		source.setHeight(numVs);
 		resVerts.get(0).setHeight(numVs);
+		//Set all outflow edges from Source to be their capacities
 		ArrayList<Edge> sourceOut = source.getOutArray();
 		for (int k = 0; k < sourceOut.size(); k++){
 			Edge ed = sourceOut.get(k);
 			ed.setFlow(ed.getCapacity());
 			ed.getDest().addToPreflow(ed.getFlow());
 			int index = findIndex(ed);
+			//Replicate in residual graph
 			residualEdges.get(index).setFlow(ed.getFlow());
+			//Capacity of reverse/backedge should be the flow of front edge i think
+			//Source: http://www.keithschwarz.com/interesting/code/ford-fulkerson/ResidualGraph.java.html
 			residualEdges.get(index).getReverse().setCapacity(residualEdges.get(index).getFlow());
 		}
 	}
 
+	//Really should be using a hashmap instead of this or at least better organization
 	private int findIndex(Edge e){
 		for (int i = 0; i < edges.size(); i++){
 			if (e.equals(edges.get(i)))
@@ -73,6 +88,8 @@ public class PushRelabel{
 		return -1;
 	}
 
+	//Poor translation of alg from wikipedia
+	//Source: https://en.wikipedia.org/wiki/Push%E2%80%93relabel_maximum_flow_algorithm
 	public void push (Node n){
 		if (n.getPreflow() > 1){
 			ArrayList<Edge> out = n.getOutArray();
@@ -121,23 +138,26 @@ public class PushRelabel{
 		return false;
 	}
 
+	//Wasn't too sure how to ensure algorithm continues running on active nodes.
+	//Can probably be optimized via "what operations can activate nodes"
 	public int getMaxFlow(){
 		boolean cont = true;
-		int counter = 0;
 		while (cont == true){
-			System.out.println(counter++);
 			cont = false;
 			for (Node n : resVerts){
 				if (n.calcExcess() > 0){
 					push(n);
 					relabel(n);
+					//Did things should probably check again.
 					cont = true;
 				}
 			}
 		}
+		//Ideally the maxflow would be the flow into the last node.
 		return resVerts.get(resVerts.size()-1).calcPreflow();
 	}
 
+	//Classic 112esque code
 	public static void main(String[] args){
 		PushRelabel pl = new PushRelabel();
 		pl.go(args);
