@@ -47,12 +47,12 @@ public class PushRelabel{
 			verts.get(v1).addOutEdge(e);
 			verts.get(v2).addInEdge(e);
 			//Edge in residual graph
-			Edge resE = new Edge(verts.get(v1), verts.get(v2), cap);
+			Edge resE = new Edge(resVerts.get(v1), resVerts.get(v2), cap);
 			residualEdges.add(resE);
 			resVerts.get(v1).addOutEdge(resE);
 			resVerts.get(v2).addInEdge(resE);
 			//The reverse edge
-			Edge be = new Edge(verts.get(v2), verts.get(v1), 0);
+			Edge be = new Edge(resVerts.get(v2), resVerts.get(v1), 0);
 			backEdges.add(be);
 			resVerts.get(v2).addOutEdge(be);
 			resVerts.get(v1).addInEdge(be);
@@ -73,6 +73,7 @@ public class PushRelabel{
 			int index = findIndex(ed);
 			//Replicate in residual graph
 			residualEdges.get(index).setFlow(ed.getFlow());
+			residualEdges.get(index).getDest().addToPreflow(ed.getFlow());
 			//Capacity of reverse/backedge should be the flow of front edge i think
 			//Source: http://www.keithschwarz.com/interesting/code/ford-fulkerson/ResidualGraph.java.html
 			residualEdges.get(index).getReverse().setCapacity(residualEdges.get(index).getFlow());
@@ -143,6 +144,9 @@ public class PushRelabel{
 	public int getMaxFlow(){
 		boolean cont = true;
 		while (cont == true){
+			//printNodes();
+			//printEdges(residualEdges);
+			//printEdges(backEdges);
 			cont = false;
 			for (Node n : resVerts){
 				if (n.calcExcess() > 0){
@@ -166,6 +170,18 @@ public class PushRelabel{
 	public void go(String[] args){
 		init();
 		System.out.println(getMaxFlow());
+	}
+
+	public void printNodes(){
+		for (Node n : resVerts){
+			System.out.println("Preflow: " + n.getPreflow() + " Outflow: " + n.getOutflow() + " Height: " + n.getHeight());
+		}
+	}
+
+	public void printEdges(ArrayList<Edge> edge){
+		for (Edge e : edge){
+			System.out.println("Coords: " + e.getSource() + " " + e.getDest() + " Cap:" + e.getCapacity() + " Flow" + e.getFlow());
+		}
 	}
 
 }
